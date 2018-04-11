@@ -1,0 +1,12 @@
+name: Non-opioidsSuggestor
+title: Non-opioidsSuggestor
+username:
+account: pvthejas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 319491
+bundleId: 1313172
+url: https://pvthejas.shinyapps.io/Non-opioidsSuggestor/
+when: 1523435494.42737
+asMultiple: FALSE
+asStatic: FALSE
