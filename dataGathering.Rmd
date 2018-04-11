@@ -1,0 +1,90 @@
+---
+title: "We Analyzed How United Healthcare™ Can Influence the Opioid Addiction Crisis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Context
+
+Currently, the United States is in the middle of a concerning crisis: the Opioid Epidemic. Opioid drugs include prescription drugs such as Oxycontin and Percocet, which block opioid pain receptors in the human brain. They are very powerful in mitigating pain, but noted for their high risk of addiction. Addictive opioids, both prescribed and illegal in nature, have been influencing and claiming the lives of millions of people, where each day an estimated [115 Americans](https://www.drugabuse.gov/drugs-abuse/opioids/opioid-overdose-crisis) die due to overdose of powerful opioid substances. While there are many different parties that influence this crisis, one often overlooked part of the domain is the role health insurance companies play in providing easier access to opioids, by bundling them in their coverage and making them more affordable to consumers than at their retail prices.
+
+[A recent investigation](https://www.nytimes.com/2017/09/17/health/opioid-painkillers-insurance-companies.html) conducted by the New York Times and Propublica found that opioid alternatives for treating chronic pain were generally less easy to access and pay for, citing the case of Amanda Jantzi - whose insurance provider could not cover the less addictive but more expensive Lyrica to wean herself off of opioids. Understanding that there is more to deciding what prescriptions to cover besides its risk of addiction, our group came up with a methodology and artifact that would help inform this decision process for insurance companies.
+
+Specifically, we are interested in informing the decisions of United Healthcare, who is reported to be the largest health insurer in the country according to the above article. 
+
+## The Concept
+
+The work of deciding what drugs to cover is done by an insurance company's Pharmacy and Therapeutics Committee (P&T Committee), who come up with a list of drugs to cover called a "formulary". According to [one company](http://www.wecareforwisconsin.com/members/formulary/who_decides_which_drugs), the process to add a new drug to a formulary is based on 3 factors:
+
+1. "Effectiveness [in treating]"
+2. "Safety"
+3. "Cost"
+
+The same source states that determining these factors in a drug is based on multiple sources, including "clinical evidence" from studies and peer-reviewed journals and the Federal Drug Association (FDA).
+
+In order to recommend non-opioid alternatives to insurance companies, we should follow this same industry-standard decision process and look out for non-opioids that are:
+
+1. As equally or more effective as common opioids
+2. Safer than common opioids
+3. Similarly priced or cheaper than common opioids
+
+Lastly, it must be iterated that our proposal's focus is on measurable, legal drug usage only, as not only is this the most reliable source of data, this is also what P&T Committees use to base their own decisions. We recognize that illegal drug dealers are also a large stakeholder within the opioid epidemic, but as their role is intentionally off-the-radar, data on their influence is either under-reported or unreliable.
+
+## The Methodology
+
+Our team's artifact captures three pieces of data on a given drug: its number of addiction reports, its cost to insurance companies to cover, and its top reported side effects. These data touch on all of the previously mentioned factors companies implore in deciding on drugs to add to their formulary. For reports on addiction and additional side effects, we accessed the FDA's Adverse Drug Event (ADE) [openAPI](https://open.fda.gov/drug/event/), which keeps records of all FDA approved drugs and the number of bad incidents associated with them over the course of 2004 to present. For coverage costs, we utilized 2014 Medicare claim data gathered from the Centers for Medicare and Medicaid Services (CMS) and their [API](https://data.cms.gov/Medicare-Part-D/Medicare-Provider-Utilization-and-Payment-Data-201/465c-49pb).
+
+The drugs we decided to analyze were based on popularity and notoreity, using a combination of online research and the CMS data to find opioids/alternatives with the highest number of claims. Below is the list of drugs we looked at:
+
+*Opioids*:
+1. Vicodin
+2. Tramadol
+3. Percocet
+4. Butrans
+5. Fentanyl
+6. Oxycontin
+7. Avinza
+
+*Non-Opioids*:
+1. Gabapentin
+2. Etodolac
+3. Lyrica
+4. Cymbalta
+5. Voltaren
+6. Suboxone
+7. Naprosyn
+
+### Cleaning FDA Data
+
+Fetching data from the FDA required us to submit queries. Drug addiction was listed under "drug abuse" in the reports, so we searched through the values of the "patient.reaction.reactionmeddrapt" key to find and compile these reports for each drug we were looking at.
+
+The fetched data was formatted into a data table and further parsed to distinguish the number of drug abuse reports across years. This process can be found in the file "year_drug_abuse.R".
+
+Drug addiction reports were plotted on a time-series graph from 2004 to 2017.
+
+For getting the top side effects of each drug, a similar query was constructed that pulled the count of all report types filed under a drug from 2004 to the present. Using the *dplyr* library in R, the function *top_n(5)* piped the results and only saved the top five report types for each drug. This process can be found in the file "Top5SideEffects.R".
+
+Top side effects data was plotted on a simple bar chart.
+
+### Cleaning CMS Data
+
+Attaining information on claim costs was intimidating at first, since the CMS data had over 20 million rows of data *just* for 2014 alone. Fortunately for feasability, our API calls were limited to only pulling 1000 rows at a time. This document will go over the downside of this limitation in the Assumptions and Limitations section below.
+
+Each row of data represents a prescription drug sold by a named prescriber in the US. Of the 21 variables for each row, we were only concerned with retrieving data from 2: "total_drug_cost" and "total_30_day_fill_count". The former is defined as "the amounts paid by the Part D plan, Medicare beneficiary, government subsidies, and any other third-party payers" from a prescriber's sales. We interpreted this as meaning the amount paid exactly by the insurance. The latter sums up the number of prescriptions dispensed for that drug by the prescriber, including the number of 30 day refills of prescriptions alloted to some patients.
+
+We calculated the average cost of a given drug's claim from a presciber, by dividing the value of a row's "total_drug_cost" by "total_30_day_fill_count". The results were compiled into a data frame. Box plots were generated for each drug based on the average and range of their average claim costs. This process can be found in the file *CMS_drug_cost_boxplot.R*.
+
+## Assumptions and Limitations
+
+As mentioned earlier, being only able to retrieve 1000 rows of data per call in the CMS API was an unfortunate limiation. This prevented us from plotting accurate averages and ranges for our boxplots, when many drugs were associated with over hundreds of thousands, even millions of rows in the data.
+
+Another significant limitation was in the FDA data source. The ADE is notorious for its severe underreporting bias, as the database is reliant on doctors and patients who voluntarily submit reports to the FDA. To mitigate this bias, we implemented an error range graph that used an [underreporting error analysis of ADE reports](https://info.adverahealth.com/adverse-drug-event-reporting-rates) to visualize the estimated range actual drug abuse rates would be in any year. As the study estimated that only 0.071% to 44.67% of all ADEs are actually reported to authorities, we transformed the reported counts we had of abuse with this percentage range and plotted it as an area graph overtime.
+
+## Future Work
+
+There are quite some things that can be done for future work, if we were to continue working on this project, but there are 2 most major ones. First of all, due to the scope of our project and the limitation of time, we eventually decided to leave out the illegal use of drug factor out and only focus on the government approved drugs. However, we’re aware that this is an essential factor, and that without the illegal drug use data, we may be distorting the data right now, so this would be one of the very first tasks of ours for future work. Another potential future work is that we could research on and make analyses on more drugs. Currently we have analyses on only a few opioids and alternatives to represent the entire opioid and alternative drug categories, but it’s undeniable that analyses on more drugs can show more accurate results and effects of covering alternative drugs. This can also lessen potential biases from how we chose which drugs to use for analyses. 
+
+While there are many other work we could possibly do to make our project more accurate, useful, or convincing, often times inspirations arise as we make more progress. Thus for relatively minor work that are smaller in scale, we could do in the future, we could just go with the flow and work on tasks that turn to be necessary or advantageous for our next steps.

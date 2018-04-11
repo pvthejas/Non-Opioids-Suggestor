@@ -1,0 +1,12 @@
+name: OpioidAnalysis
+title: OpioidAnalysis
+username:
+account: pvthejas
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 299802
+bundleId: 1269588
+url: https://pvthejas.shinyapps.io/opioidanalysis/
+when: 1521092308.73255
+asMultiple: FALSE
+asStatic: FALSE
